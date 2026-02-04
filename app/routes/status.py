@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
+from typing import List
 from fastapi import HTTPException
 
 router = APIRouter()
@@ -31,3 +32,12 @@ def get_status(
     if not status:
         raise HTTPException(status_code=404, detail="Status not found")
     return status
+
+@router.get("/", response_model=List[schemas.StatusResponse]) # 👈 Response adalah list
+def get_all_statuses(
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100
+):
+    statuses = db.query(models.Status).offset(skip).limit(limit).all()
+    return statuses
