@@ -48,14 +48,25 @@ def update_status(
     payload: schemas.StatusCreate,
     db: Session = Depends(get_db)
 ):
+    # 1. Buat objek query terlebih dahulu dan simpan di variabel `status_query`.
+    #    Perhatikan kita belum mengambil datanya, baru "membangun" perintahnya.
     status_query = db.query(models.Status).filter(models.Status.id == status_id)
+
+    # 2. Sekarang, gunakan query tersebut untuk mengambil satu data (`.first()`).
     db_status = status_query.first()
+
+    # 3. Lakukan pengecekan jika data tidak ditemukan.
     if not db_status:
         raise HTTPException(status_code=404, detail="Status not found")
 
+    # 4. Siapkan data baru dari payload.
     update_data = payload.model_dump(exclude_unset=True)
+
+    # 5. Gunakan objek `status_query` yang sudah kita buat di awal untuk melakukan
+    #    operasi UPDATE secara efisien di database.
     status_query.update(update_data, synchronize_session=False)
 
+    # 6. Commit perubahan dan segarkan objeknya.
     db.commit()
     db.refresh(db_status)
 
