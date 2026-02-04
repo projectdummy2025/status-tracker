@@ -41,3 +41,22 @@ def get_all_statuses(
 ):
     statuses = db.query(models.Status).offset(skip).limit(limit).all()
     return statuses
+
+@router.put("/{status_id}", response_model=schemas.StatusResponse)
+def update_status(
+    status_id: int,
+    payload: schemas.StatusCreate,
+    db: Session = Depends(get_db)
+):
+    status_query = db.query(models.Status).filter(models.Status.id == status_id)
+    db_status = status_query.first()
+    if not db_status:
+        raise HTTPException(status_code=404, detail="Status not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    status_query.update(update_data, synchronize_session=False)
+
+    db.commit()
+    db.refresh(db_status)
+
+    return db_status
